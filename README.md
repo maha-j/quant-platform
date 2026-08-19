@@ -130,9 +130,9 @@ Chaque dossier racine contient son propre `README.md` détaillant son rôle et s
 > Guide d'installation pas-à-pas complet : **[INSTALL.md](INSTALL.md)**.
 
 ```bash
-# 1. Environnement Python
+# 1. Environnement Python (cœur + dev ; ML/backtest/messaging = extras optionnels)
 python3 -m venv .venv && source .venv/bin/activate
-pip install -e "./python[dev]"
+pip install -e "./python[dev]"          # tout : "./python[all]"
 
 # 2. Lancer la suite de tests
 export PYTHONPATH="$PWD/python:$PWD"

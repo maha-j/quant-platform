@@ -1,32 +1,47 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "quant-platform"
 version = "0.1.0"
 description = "Cerveau quantitatif : data, IA/ML/DL, backtesting, risque, exécution, reporting."
 requires-python = ">=3.11"
+# Dépendances cœur : suffisantes pour l'exécution de base, le service et les tests.
+# Les briques lourdes (DL, backtest tiers, messagerie) sont des extras optionnels,
+# à l'image des imports guardés dans le code (chargés seulement si présents).
 dependencies = [
     "numpy>=1.26",
     "pandas>=2.2",
     "polars>=1.0",
-    "vectorbt>=0.26",
-    "backtrader>=1.9",
-    "scikit-learn>=1.5",
-    "torch>=2.3",
-    "tensorflow>=2.16",
     "sqlalchemy>=2.0",
     "pydantic>=2.7",
     "pydantic-settings>=2.3",
     "fastapi>=0.111",
     "uvicorn>=0.30",
-    "pyzmq>=26.0",
-    "optuna>=3.6",
-    "lightgbm>=4.3",
-    "xgboost>=2.0",
-    "catboost>=1.2",
+    "httpx>=0.27",
     "structlog>=24.1",
 ]
 
 [project.optional-dependencies]
+ml = [
+    "scikit-learn>=1.5",
+    "torch>=2.3",
+    "tensorflow>=2.16",
+    "lightgbm>=4.3",
+    "xgboost>=2.0",
+    "catboost>=1.2",
+    "optuna>=3.6",
+]
+backtest = ["vectorbt>=0.26", "backtrader>=1.9"]
+messaging = ["pyzmq>=26.0"]
 dev = ["pytest>=8.2", "pytest-asyncio>=0.23", "ruff>=0.5", "mypy>=1.10"]
+all = ["quant-platform[ml,backtest,messaging,dev]"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["common*", "data*", "execution*", "strategies*", "research*"]
+namespaces = true
 
 [tool.ruff]
 line-length = 100

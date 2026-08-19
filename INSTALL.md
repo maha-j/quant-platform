@@ -61,13 +61,22 @@ cd quant-platform
 python3 -m venv .venv
 source .venv/bin/activate          # Windows : .venv\Scripts\activate
 
-# Installer le paquet (mode éditable) + outils de dev
+# Installation cœur + outils de dev (suffit pour les tests et les démos)
 pip install -e "./python[dev]"
 ```
 
-Le paquet et ses dépendances sont déclarés dans [`python/pyproject.toml`](python/pyproject.toml)
-(NumPy, Pandas, Polars, scikit-learn, PyTorch, TensorFlow, FastAPI, Pydantic,
-SQLAlchemy, pyzmq, LightGBM, XGBoost, CatBoost, Optuna, structlog…).
+Les dépendances sont déclarées dans [`python/pyproject.toml`](python/pyproject.toml).
+Le **cœur** (NumPy, Pandas, Polars, FastAPI, Pydantic, SQLAlchemy, httpx, structlog)
+est toujours installé ; les briques lourdes sont des **extras optionnels**, à
+l'image des imports guardés dans le code :
+
+| Extra        | Contenu | Installer |
+|--------------|---------|-----------|
+| `dev`        | pytest, ruff, mypy | `pip install -e "./python[dev]"` |
+| `ml`         | scikit-learn, PyTorch, TensorFlow, LightGBM, XGBoost, CatBoost, Optuna | `pip install -e "./python[ml]"` |
+| `backtest`   | VectorBT, Backtrader | `pip install -e "./python[backtest]"` |
+| `messaging`  | pyzmq (pont ZeroMQ) | `pip install -e "./python[messaging]"` |
+| `all`        | tout ce qui précède | `pip install -e "./python[all]"` |
 
 Le code source vit sous `python/`, `ml/` et `backtests/`. Ajoutez-les au
 `PYTHONPATH` pour les exécutions locales :
