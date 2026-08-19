@@ -21,10 +21,17 @@ jobs:
         run: pip install -e "./python[dev]"
       - name: Ruff
         run: ruff check python ml backtests
-      - name: Pytest
-        run: pytest tests/unit -q
+      - name: Pytest + couverture
+        run: pytest tests/unit -q --cov=python --cov=ml --cov=backtests --cov-report=xml
         env:
           PYTHONPATH: ${{ github.workspace }}/python:${{ github.workspace }}
+      - name: Upload couverture (Codecov)
+        uses: codecov/codecov-action@v4
+        with:
+          files: coverage.xml
+          fail_ci_if_error: false      # ne casse pas la CI si l'upload échoue
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   cpp:
     name: C++ · build + GoogleTest

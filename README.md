@@ -1,5 +1,10 @@
 # Quant Platform
 
+[![CI](https://github.com/maha-j/quant-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/maha-j/quant-platform/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/maha-j/quant-platform/branch/main/graph/badge.svg)](https://codecov.io/gh/maha-j/quant-platform)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](python/pyproject.toml)
+
 Plateforme de trading quantitatif de type *hedge fund*, organisée par **domaine
 technique**. Chaque dossier racine est autonome, possède une frontière claire et
 un `README.md` décrivant son rôle, ses entrées/sorties et ses règles.
@@ -210,5 +215,6 @@ MQL5 dans MetaTrader 5, règles d'alerte Alertmanager.
 
 ## Licence
 
-Usage privé. Aucune garantie — logiciel fourni « en l'état ». Le trading comporte
-un risque de perte en capital.
+Distribué sous licence **MIT** — voir [LICENSE](LICENSE). Logiciel fourni « en
+l'état », sans garantie. Le trading comporte un risque de perte en capital ;
+utilisez à vos propres risques.

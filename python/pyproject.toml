@@ -35,7 +35,7 @@ ml = [
 ]
 backtest = ["vectorbt>=0.26", "backtrader>=1.9"]
 messaging = ["pyzmq>=26.0"]
-dev = ["pytest>=8.2", "pytest-asyncio>=0.23", "ruff>=0.5", "mypy>=1.10"]
+dev = ["pytest>=8.2", "pytest-asyncio>=0.23", "pytest-cov>=4.1", "ruff>=0.5", "mypy>=1.10"]
 all = ["quant-platform[ml,backtest,messaging,dev]"]
 
 [tool.setuptools.packages.find]

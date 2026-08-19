@@ -15,3 +15,9 @@ cpp/build/
 *.py[cod]
 .venv/
 *.ex5
+
+# Couverture de tests
+.coverage
+coverage.xml
+htmlcov/
+.pytest_cache/
