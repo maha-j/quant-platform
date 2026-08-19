@@ -1,0 +1,38 @@
+# Configuration Alertmanager : routage et destinations des alertes.
+# Les récepteurs ci-dessous sont des gabarits — renseignez vos vraies URLs/SMTP
+# via des variables d'environnement/secrets, jamais en dur dans le dépôt.
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: default
+  group_by: ["alertname", "severity"]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+    # Les alertes critiques sont routées vers un canal prioritaire et répétées plus vite.
+    - matchers: ['severity="critical"']
+      receiver: critical
+      repeat_interval: 1h
+
+receivers:
+  - name: default
+    webhook_configs:
+      - url: "http://127.0.0.1:9099/alerts"   # gabarit : à remplacer
+        send_resolved: true
+
+  - name: critical
+    webhook_configs:
+      - url: "http://127.0.0.1:9099/alerts/critical"
+        send_resolved: true
+    # Exemple e-mail (décommenter et renseigner global.smtp_* + secrets) :
+    # email_configs:
+    #   - to: "ops@example.com"
+    #     send_resolved: true
+
+inhibit_rules:
+  # Une alerte critique éteint la version warning du même sujet.
+  - source_matchers: ['severity="critical"']
+    target_matchers: ['severity="warning"']
+    equal: ["alertname"]

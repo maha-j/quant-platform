@@ -30,8 +30,19 @@ services:
     image: prom/prometheus:latest
     volumes:
       - ../../monitoring/prometheus:/etc/prometheus:ro
+      - ../../monitoring/alerts/rules.yml:/etc/prometheus/rules/rules.yml:ro  # règles d'alerte uniquement
     ports:
       - "9090:9090"
+    depends_on:
+      - alertmanager
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    command: ["--config.file=/etc/alertmanager/alertmanager.yml"]
+    volumes:
+      - ../../monitoring/alerts/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    ports:
+      - "9093:9093"
 
   grafana:
     image: grafana/grafana:latest

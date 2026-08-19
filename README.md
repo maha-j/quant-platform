@@ -197,11 +197,19 @@ Services exposés :
 | ZeroMQ signaux    | 5555  | PUB des signaux |
 | ZeroMQ télémétrie | 5556  | PULL ordres/fills |
 | side-car TCP      | 5560  | relais vers l'EA MQL5 |
-| Prometheus        | 9090  | scraping des métriques |
+| Prometheus        | 9090  | scraping des métriques + évaluation des règles |
+| Alertmanager      | 9093  | routage des alertes |
 | Grafana           | 3000  | dashboard « Quant Platform » (pré-provisionné) |
 
 Le dashboard Grafana (`monitoring/grafana/dashboards/quant-overview.json`) est
 provisionné automatiquement et connecté à Prometheus qui scrape `execution:8000/metrics`.
+
+**Alerting.** Les règles Prometheus (`monitoring/alerts/rules.yml`) couvrent la
+santé du service, le risque (trading gelé, coupe-circuit, drawdown, perte
+journalière) et le flux de signaux (latence p95, absence de signaux) ; elles sont
+routées par Alertmanager (`monitoring/alerts/alertmanager.yml`). La boucle
+d'exécution pousse son état de risque via `POST /risk/state`, exposé ensuite en
+métriques `quant_*` (equity, drawdown, coupe-circuits…).
 
 ## État & feuille de route
 

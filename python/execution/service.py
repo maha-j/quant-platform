@@ -55,6 +55,17 @@ class SignalEnvelope(BaseModel):
         )
 
 
+class RiskState(BaseModel):
+    """Instantané de risque poussé vers l'observabilité (support des alertes)."""
+
+    equity: float
+    drawdown_pct: float = 0.0
+    daily_loss_pct: float = 0.0
+    open_positions: int = 0
+    circuit_breaker_active: bool = False
+    trading_halted: bool = False
+
+
 def create_app(settings: Settings | None = None) -> FastAPI:
     """Fabrique l'application (injection de config pour les tests)."""
 
@@ -72,6 +83,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         "quant_last_signal_confidence", "Confiance du dernier signal.")
     publish_latency = registry.histogram(
         "quant_publish_latency_seconds", "Latence de traitement d'un signal.")
+    # État de risque poussé par la boucle d'exécution (support des alertes).
+    g_equity = registry.gauge("quant_equity", "Equity courante du compte.")
+    g_drawdown = registry.gauge("quant_drawdown_pct", "Drawdown depuis le pic (fraction).")
+    g_daily_loss = registry.gauge("quant_daily_loss_pct", "Perte du jour (fraction).")
+    g_positions = registry.gauge("quant_open_positions", "Positions ouvertes.")
+    g_breaker = registry.gauge("quant_circuit_breaker_active", "Coupe-circuit actif (1/0).")
+    g_halted = registry.gauge("quant_trading_halted", "Trading gelé (1/0).")
 
     @app.get("/health")
     def health() -> dict[str, str]:
@@ -94,6 +112,22 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.get("/signals/last")
     def last() -> SignalEnvelope | None:
         return state["last"]
+
+    @app.post("/risk/state")
+    def push_risk_state(rs: RiskState) -> dict[str, str]:
+        """Reçoit l'état de risque de la boucle d'exécution et le publie en métriques.
+
+        Permet à Prometheus/Alertmanager de surveiller equity, drawdown,
+        coupe-circuits et gel du trading (voir monitoring/alerts/).
+        """
+
+        g_equity.set(rs.equity)
+        g_drawdown.set(rs.drawdown_pct)
+        g_daily_loss.set(rs.daily_loss_pct)
+        g_positions.set(rs.open_positions)
+        g_breaker.set(1.0 if rs.circuit_breaker_active else 0.0)
+        g_halted.set(1.0 if rs.trading_halted else 0.0)
+        return {"status": "ok"}
 
     @app.get("/metrics")
     def metrics() -> Response:

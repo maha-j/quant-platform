@@ -1,0 +1,73 @@
+# Règles d'alerte Prometheus sur les métriques de la plateforme.
+# Chargées par Prometheus via rule_files (voir monitoring/prometheus/prometheus.yml)
+# et routées par Alertmanager (voir alertmanager.yml).
+groups:
+  - name: service-health
+    rules:
+      - alert: ExecutionServiceDown
+        expr: up{job="execution"} == 0
+        for: 1m
+        labels: { severity: critical }
+        annotations:
+          summary: "Service d'exécution injoignable"
+          description: "Prometheus ne scrape plus {{ $labels.instance }} depuis 1 min."
+
+  - name: risk
+    rules:
+      - alert: TradingHalted
+        expr: quant_trading_halted == 1
+        for: 0m
+        labels: { severity: critical }
+        annotations:
+          summary: "Trading gelé (auto-shutdown)"
+          description: "Le moteur de risque a gelé le trading (coupe-circuit + auto_shutdown)."
+
+      - alert: CircuitBreakerActive
+        expr: quant_circuit_breaker_active == 1
+        for: 1m
+        labels: { severity: critical }
+        annotations:
+          summary: "Coupe-circuit de risque déclenché"
+          description: "Un coupe-circuit global est actif depuis 1 min (drawdown/perte/equity)."
+
+      - alert: DrawdownWarning
+        expr: quant_drawdown_pct > 0.08
+        for: 2m
+        labels: { severity: warning }
+        annotations:
+          summary: "Drawdown élevé (> 8%)"
+          description: "Drawdown depuis le pic = {{ $value | humanizePercentage }}."
+
+      - alert: DrawdownCritical
+        expr: quant_drawdown_pct > 0.10
+        for: 0m
+        labels: { severity: critical }
+        annotations:
+          summary: "Drawdown critique (> 10%)"
+          description: "Drawdown depuis le pic = {{ $value | humanizePercentage }}."
+
+      - alert: DailyLossWarning
+        expr: quant_daily_loss_pct > 0.015
+        for: 2m
+        labels: { severity: warning }
+        annotations:
+          summary: "Perte journalière proche de la limite"
+          description: "Perte du jour = {{ $value | humanizePercentage }}."
+
+  - name: signals-flow
+    rules:
+      - alert: HighPublishLatency
+        expr: histogram_quantile(0.95, rate(quant_publish_latency_seconds_bucket[5m])) > 0.5
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: "Latence de publication p95 élevée"
+          description: "p95 = {{ $value }} s sur 5 min (seuil 0.5 s)."
+
+      - alert: NoSignalsPublished
+        expr: rate(quant_signals_published_total[15m]) == 0
+        for: 15m
+        labels: { severity: warning }
+        annotations:
+          summary: "Aucun signal publié depuis 15 min"
+          description: "Le flux de signaux est peut-être interrompu (stratégie/données)."

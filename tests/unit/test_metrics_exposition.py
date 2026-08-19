@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient  # noqa: E402
 
 from common.config import Settings  # noqa: E402
 from common.metrics import MetricsRegistry  # noqa: E402
-from execution.service import create_app  # noqa: E402
+from execution.service import RiskState, create_app  # noqa: E402
 from strategies.signals import Signal, Side  # noqa: E402
 
 
@@ -40,3 +40,20 @@ def test_metrics_endpoint_counts_signals():
     assert "quant_signals_flat_total 1.0" in body
     assert "quant_last_signal_confidence 0.0" in body  # dernier = flat
     assert "quant_publish_latency_seconds_count 2" in body
+
+
+def test_risk_state_endpoint_exposes_metrics():
+    app = create_app(Settings())
+    client = TestClient(app)
+
+    rs = RiskState(equity=9500.0, drawdown_pct=0.12, daily_loss_pct=0.02,
+                   open_positions=3, circuit_breaker_active=True,
+                   trading_halted=True)
+    assert client.post("/risk/state", json=rs.model_dump()).status_code == 200
+
+    body = client.get("/metrics").text
+    assert "quant_equity 9500.0" in body
+    assert "quant_drawdown_pct 0.12" in body
+    assert "quant_circuit_breaker_active 1.0" in body
+    assert "quant_trading_halted 1.0" in body
+    assert "quant_open_positions 3.0" in body
