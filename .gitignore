@@ -1,0 +1,17 @@
+# Runtime / généré
+logs/*
+!logs/.gitkeep
+backtests/results/*
+!backtests/results/.gitkeep
+
+# Secrets
+config/secrets/*
+!config/secrets/.gitkeep
+!config/secrets/*.example
+
+# Artefacts de build
+cpp/build/
+**/__pycache__/
+*.py[cod]
+.venv/
+*.ex5

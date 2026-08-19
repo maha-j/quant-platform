@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Hook pre-commit : garde-fous rapides avant chaque commit.
+# Installer : ln -s ../../cicd/hooks/pre-commit .git/hooks/pre-commit
+set -euo pipefail
+
+ROOT="$(git rev-parse --show-toplevel)"
+cd "$ROOT"
+
+echo "[pre-commit] ruff…"
+if command -v ruff >/dev/null 2>&1; then
+  ruff check python ml backtests
+fi
+
+echo "[pre-commit] pytest (tests unitaires Python)…"
+PYTHONPATH="$ROOT/python:$ROOT" pytest tests/unit -q
+
+echo "[pre-commit] OK"

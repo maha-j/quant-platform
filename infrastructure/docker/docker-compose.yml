@@ -1,0 +1,46 @@
+# Orchestration locale : service d'exécution + pont ZeroMQ→TCP + monitoring.
+# Contexte de build = racine du dépôt (../..) pour accéder à tous les dossiers.
+name: quant-platform
+
+services:
+  execution:
+    build:
+      context: ../..
+      dockerfile: infrastructure/docker/Dockerfile.python
+    ports:
+      - "8000:8000"   # API de contrôle FastAPI
+      - "5555:5555"   # ZeroMQ PUB signaux
+      - "5556:5556"   # ZeroMQ PULL télémétrie
+    environment:
+      QP_ENVIRONMENT: staging
+    restart: unless-stopped
+
+  zmq-tcp-bridge:
+    build:
+      context: ../..
+      dockerfile: infrastructure/docker/Dockerfile.python
+    command: ["python", "-m", "execution.zmq_tcp_bridge"]
+    ports:
+      - "5560:5560"   # TCP consommé par l'EA MQL5 (SocketConnect)
+    depends_on:
+      - execution
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ../../monitoring/prometheus:/etc/prometheus:ro
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:latest
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - ../../monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ../../monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus

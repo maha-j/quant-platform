@@ -1,0 +1,52 @@
+# Pipeline CI — GitHub Actions.
+# Trois jobs indépendants : qualité/tests Python, build/test C++, build images.
+# À placer dans .github/workflows/ci.yml (ou référencé depuis) selon le remote.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  python:
+    name: Python · lint + tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: pip install -e "./python[dev]"
+      - name: Ruff
+        run: ruff check python ml backtests
+      - name: Pytest
+        run: pytest tests/unit -q
+        env:
+          PYTHONPATH: ${{ github.workspace }}/python:${{ github.workspace }}
+
+  cpp:
+    name: C++ · build + GoogleTest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deps
+        run: sudo apt-get update && sudo apt-get install -y cmake libfmt-dev libspdlog-dev libeigen3-dev
+      - name: Configure
+        run: cmake -S cpp -B build -DCMAKE_BUILD_TYPE=Release -DQUANT_BUILD_TESTS=ON
+      - name: Build
+        run: cmake --build build -j"$(nproc)"
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+  images:
+    name: Build images
+    runs-on: ubuntu-latest
+    needs: [python, cpp]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build C++ image
+        run: docker build -f infrastructure/docker/Dockerfile.cpp -t quant-cpp .
+      - name: Build Python image
+        run: docker build -f infrastructure/docker/Dockerfile.python -t quant-python .

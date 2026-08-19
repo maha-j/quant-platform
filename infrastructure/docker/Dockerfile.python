@@ -1,0 +1,17 @@
+# Image du service Python (cerveau + API d'exécution + pont ZeroMQ).
+FROM python:3.11-slim
+
+ENV PYTHONUNBUFFERED=1 PYTHONPATH=/app/python:/app
+
+WORKDIR /app
+COPY python/pyproject.toml ./python/pyproject.toml
+RUN pip install --no-cache-dir -e ./python
+
+COPY python/ ./python/
+COPY ml/ ./ml/
+COPY backtests/ ./backtests/
+COPY config/ ./config/
+
+EXPOSE 8000 5555 5556 5560
+# Service d'exécution (FastAPI). Le pont ZeroMQ→TCP est un autre service (compose).
+CMD ["uvicorn", "execution.service:app", "--host", "0.0.0.0", "--port", "8000"]
