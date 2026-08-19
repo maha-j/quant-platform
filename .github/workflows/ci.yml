@@ -6,6 +6,7 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:   # permet la relance manuelle depuis l'onglet Actions / gh
 
 jobs:
   python:
