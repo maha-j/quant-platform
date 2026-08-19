@@ -47,7 +47,7 @@ def walk_forward_windows(n: int, train_size: int, test_size: int,
 
 
 def grid_search(run_fn: RunFn, space: ParamSpace, data: np.ndarray,
-                objective: Callable[[np.ndarray], float] = None) -> dict:
+                objective: Callable[[np.ndarray], float] | None = None) -> dict:
     """Optimisation exhaustive ; objectif par défaut = Sharpe."""
 
     objective = objective or (lambda eq: sharpe_ratio(np.diff(eq) / eq[:-1]))
@@ -69,7 +69,7 @@ def grid_search(run_fn: RunFn, space: ParamSpace, data: np.ndarray,
 
 
 def genetic_optimize(run_fn: RunFn, space: ParamSpace, data: np.ndarray,
-                     objective: Callable[[np.ndarray], float] = None,
+                     objective: Callable[[np.ndarray], float] | None = None,
                      population: int = 20, generations: int = 15,
                      mutation_rate: float = 0.2, seed: int = 42) -> dict:
     """Algorithme génétique pour grands espaces de paramètres.

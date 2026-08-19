@@ -43,9 +43,8 @@ where = ["."]
 include = ["common*", "data*", "execution*", "strategies*", "research*"]
 namespaces = true
 
-[tool.ruff]
-line-length = 100
-target-version = "py311"
+# La config ruff est centralisée à la racine (ruff.toml) pour un lint identique
+# entre local et CI sur tous les dossiers (python/ ml/ backtests/).
 
 [tool.mypy]
 strict = true

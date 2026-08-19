@@ -1,0 +1,9 @@
+# Configuration ruff unique de la plateforme (racine) : lint déterministe et
+# identique en local et en CI, sur python/, ml/ et backtests/.
+# Le ruleset est explicite pour ne pas dépendre des défauts d'une version de ruff.
+line-length = 100
+target-version = "py311"
+
+[lint]
+# Défaut ruff (E4/E7/E9/F) + interdiction des Optional implicites (RUF013).
+select = ["E4", "E7", "E9", "F", "RUF013"]
