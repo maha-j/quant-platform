@@ -76,7 +76,8 @@ l'image des imports guardés dans le code :
 | `ml`         | scikit-learn, PyTorch, TensorFlow, LightGBM, XGBoost, CatBoost, Optuna | `pip install -e "./python[ml]"` |
 | `backtest`   | VectorBT, Backtrader | `pip install -e "./python[backtest]"` |
 | `messaging`  | pyzmq (pont ZeroMQ) | `pip install -e "./python[messaging]"` |
-| `all`        | tout ce qui précède | `pip install -e "./python[all]"` |
+| `mt5`        | MetaTrader5 (Windows uniquement) | `pip install -e "./python[mt5]"` |
+| `all`        | ml + backtest + messaging + dev (hors `mt5`) | `pip install -e "./python[all]"` |
 
 Le code source vit sous `python/`, `ml/` et `backtests/`. Ajoutez-les au
 `PYTHONPATH` pour les exécutions locales :
@@ -112,7 +113,27 @@ QP_MESSAGING__TRANSPORT=zeromq
 QP_MESSAGING__SIGNALS_ENDPOINT=tcp://0.0.0.0:5555
 QP_MESSAGING__HMAC_SECRET=change-me
 QP_MESSAGING__SIGNAL_TTL_SECONDS=30
+
+# Provider MetaTrader 5 (Windows) — identifiants du terminal
+QP_MT5__ENABLED=true
+QP_MT5__LOGIN=12345678
+QP_MT5__PASSWORD=change-me           # via secret manager, jamais commité
+QP_MT5__SERVER=Broker-Server
+QP_MT5__PATH=                         # vide = auto-détection du terminal
 ```
+
+Provider de données MetaTrader 5 (nécessite l'extra `mt5` et un terminal MT5) :
+
+```python
+from common.config import load_settings
+from data.mt5 import MetaTrader5DataSource
+
+ds = MetaTrader5DataSource.connect(load_settings().mt5)   # ouvre le terminal
+frame = await ds.fetch("EURUSD", "M15", 500)              # 500 dernières barres
+ds.close()
+```
+
+Installation de l'extra : `pip install -e "./python[mt5]"` (Windows uniquement).
 
 > **Secrets** : ne jamais committer de secret réel. Le dossier `config/secrets/`
 > est ignoré par Git ; n'y placez que des fichiers `*.example`. En production,

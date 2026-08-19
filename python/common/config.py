@@ -73,6 +73,21 @@ class MessagingConfig(BaseModel):
     signal_ttl_seconds: PositiveInt = 30
 
 
+class MetaTrader5Config(BaseModel):
+    """Identifiants de connexion au terminal MetaTrader 5.
+
+    Renseignés via l'environnement (``QP_MT5__*``) ou un gestionnaire de secrets ;
+    ne jamais committer d'identifiant réel.
+    """
+
+    enabled: bool = False
+    path: str = ""              # chemin du terminal ; vide = auto-détection
+    login: int | None = None
+    password: str = ""
+    server: str = ""
+    timeout_ms: PositiveInt = 60000
+
+
 class Settings(BaseSettings):
     """Point d'entrée unique de configuration.
 
@@ -93,6 +108,7 @@ class Settings(BaseSettings):
     volatility: VolatilityFilter = Field(default_factory=VolatilityFilter)
     data: DataConfig = Field(default_factory=DataConfig)
     messaging: MessagingConfig = Field(default_factory=MessagingConfig)
+    mt5: MetaTrader5Config = Field(default_factory=MetaTrader5Config)
 
 
 def load_settings() -> Settings:
