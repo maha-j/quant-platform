@@ -139,15 +139,24 @@ Chaque dossier racine contient son propre `README.md` détaillant son rôle et s
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e "./python[dev]"          # tout : "./python[all]"
 
-# 2. Lancer la suite de tests
+# 2. Tout démarrer en une commande : service + pont ZeroMQ + trading démo
+make run                 # (ou ./scripts/run_all.sh) — Ctrl-C pour tout arrêter
+make run-once            # démarre, joue la démo, puis arrête tout
+
+# 3. Autres cibles utiles
+make test                # tests unitaires Python
+make lint                # ruff
+make cpp                 # build + tests C++
+```
+
+Ou manuellement :
+
+```bash
 export PYTHONPATH="$PWD/python:$PWD"
-pytest tests/unit -q
-
-# 3. Démo ML bout-en-bout (données synthétiques)
-python python/research/ml_end_to_end.py
-
-# 4. Démo ML via provider REST (in-process, sans réseau)
-python python/research/rest_end_to_end.py
+pytest tests/unit -q                         # tests
+python python/research/paper_trading_demo.py # simulateur de trading démo
+python python/research/ml_end_to_end.py      # démo ML bout-en-bout
+python python/research/rest_end_to_end.py    # démo ML via provider REST
 ```
 
 ## Exécuter les tests & les démos
