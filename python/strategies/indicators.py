@@ -1,9 +1,10 @@
 """Indicateurs techniques.
 
-Implémentation de référence NumPy/Pandas. Les chemins critiques (ATR/EMA/RSI)
-peuvent être délégués au module natif C++ ``quant_native`` (pybind11) quand il
-est disponible — l'interface reste identique (LSP : substituable sans changement
-d'appelant). Voir `cpp/`.
+Trois chemins possibles, interface identique (LSP) :
+1. module natif C++ ``quant_native`` (pybind11) si présent — le plus rapide ;
+2. repli **NumPy pur** (aucune dépendance externe, exécutable partout) ;
+
+Les récurrences NumPy reproduisent exactement l'algorithme C++ (voir `cpp/`).
 """
 from __future__ import annotations
 
@@ -17,14 +18,28 @@ except ImportError:  # pragma: no cover - fallback pur Python
     _NATIVE = False
 
 
+def _ewm(values: np.ndarray, alpha: float) -> np.ndarray:
+    """Moyenne exponentielle récursive (adjust=False), NumPy pur.
+
+    out[0] = values[0] ; out[i] = alpha*values[i] + (1-alpha)*out[i-1].
+    """
+
+    values = np.asarray(values, dtype=float)
+    out = np.empty_like(values)
+    if values.size == 0:
+        return out
+    out[0] = values[0]
+    for i in range(1, values.size):
+        out[i] = alpha * values[i] + (1.0 - alpha) * out[i - 1]
+    return out
+
+
 def ema(values: np.ndarray, period: int) -> np.ndarray:
     """Exponential Moving Average."""
 
     if _NATIVE:
         return np.asarray(quant_native.ema(values, period))
-    import pandas as pd  # import paresseux : non requis si accélération native
-
-    return pd.Series(values).ewm(span=period, adjust=False).mean().to_numpy()
+    return _ewm(values, 2.0 / (period + 1.0))
 
 
 def rsi(close: np.ndarray, period: int = 14) -> np.ndarray:
@@ -32,15 +47,15 @@ def rsi(close: np.ndarray, period: int = 14) -> np.ndarray:
 
     if _NATIVE:
         return np.asarray(quant_native.rsi(close, period))
-    import pandas as pd
-
+    close = np.asarray(close, dtype=float)
     delta = np.diff(close, prepend=close[0])
-    gain = pd.Series(np.where(delta > 0, delta, 0.0))
-    loss = pd.Series(np.where(delta < 0, -delta, 0.0))
-    avg_gain = gain.ewm(alpha=1 / period, adjust=False).mean()
-    avg_loss = loss.ewm(alpha=1 / period, adjust=False).mean()
-    rs = avg_gain / avg_loss.replace(0, np.nan)
-    return (100 - 100 / (1 + rs)).fillna(100).to_numpy()
+    gain = np.where(delta > 0, delta, 0.0)
+    loss = np.where(delta < 0, -delta, 0.0)
+    avg_gain = _ewm(gain, 1.0 / period)
+    avg_loss = _ewm(loss, 1.0 / period)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        rs = np.where(avg_loss > 0, avg_gain / avg_loss, np.inf)
+    return np.where(np.isinf(rs), 100.0, 100.0 - 100.0 / (1.0 + rs))
 
 
 def atr(high: np.ndarray, low: np.ndarray, close: np.ndarray, period: int = 14) -> np.ndarray:
@@ -48,8 +63,9 @@ def atr(high: np.ndarray, low: np.ndarray, close: np.ndarray, period: int = 14) 
 
     if _NATIVE:
         return np.asarray(quant_native.atr(high, low, close, period))
-    import pandas as pd
-
+    high = np.asarray(high, dtype=float)
+    low = np.asarray(low, dtype=float)
+    close = np.asarray(close, dtype=float)
     prev_close = np.roll(close, 1)
     prev_close[0] = close[0]
     tr = np.maximum.reduce([
@@ -57,7 +73,7 @@ def atr(high: np.ndarray, low: np.ndarray, close: np.ndarray, period: int = 14) 
         np.abs(high - prev_close),
         np.abs(low - prev_close),
     ])
-    return pd.Series(tr).ewm(alpha=1 / period, adjust=False).mean().to_numpy()
+    return _ewm(tr, 1.0 / period)
 
 
 def native_available() -> bool:
